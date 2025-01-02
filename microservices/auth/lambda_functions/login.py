@@ -1,6 +1,6 @@
 # login.py
 # Handles login logic by receiving an event (username, password) and verifying auth with the cognito user pool.
-from lib2to3.fixes.fix_input import context
+
 from os import getenv
 from typing import Any, Union
 
@@ -9,10 +9,6 @@ from utils.aws_lambda import construct_response
 from boto3 import client
 from mypy_boto3_cognito_idp.client import CognitoIdentityProviderClient
 from mypy_boto3_cognito_idp.type_defs import InitiateAuthResponseTypeDef
-
-env_string: str = getenv('ENVIRONMENT', '')
-if not env_string:
-    raise RuntimeError('Environment variable \'ENVIRONMENT\' is not set.')
 
 user_pool_client_id: str = getenv('USER_CLIENT_ID', '')
 if not user_pool_client_id:
@@ -29,9 +25,11 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Union[int, 
     Lambda handler for user login. Initiates authentication flow for the user. If the user is required to
     change their password, the response will include a session token. Otherwise, the response will include the access
     token, ID token, refresh token, and expiration time.
-    :param event: Event data passed into the lambda function.
-    :param context: Lambda context object.
-    :return: response data.
+
+    :param event: Event data passed into the lambda function from the caller.
+    :param context: A LambdaContext object that provides methods and properties about the
+        invocation, function, and execution environment.
+    :return: A dictionary containing the HTTP response.
     """
     try:
         # Get the username and password from the event
@@ -67,9 +65,3 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Union[int, 
         print(f'Login successful for `{username}.')
 
     return construct_response(status_code=200, data=data)
-
-def main() -> None:
-    lambda_handler(event={'username': 'brian', 'password': 'PCf4P92&'}, context=None)
-
-if __name__ == '__main__':
-    main()
