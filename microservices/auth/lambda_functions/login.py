@@ -5,17 +5,17 @@ from os import getenv
 from typing import Any, Union
 
 from boto3 import client
-from mypy_boto3_cognito_idp.client import CognitoIdentityProviderClient
-from mypy_boto3_cognito_idp.type_defs import InitiateAuthResponseTypeDef
 
 from utils.aws_lambda import construct_response
 
-user_pool_client_id: str = getenv('USER_CLIENT_ID', '')
+# TODO: Have to package the lambda function with the required dependencies in `requirements.txt`
+
+user_pool_client_id: str = getenv('USER_POOL_CLIENT_ID', '')
 if not user_pool_client_id:
-    raise RuntimeError('Environment variable \'USER_CLIENT_ID\' is not set.')
+    raise RuntimeError('Environment variable \'USER_POOL_CLIENT_ID\' is not set.')
 
 # Get cognito client
-cognito_client: CognitoIdentityProviderClient = client('cognito-idp')
+cognito_client = client('cognito-idp')
 
 # TODO: Eventually make a function to send an error response to the frontend
 # TODO: Add logging
@@ -41,7 +41,7 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Union[int, 
         return construct_response(status_code=400, message=f'Login failed. Missing required parameters: {e}')
     try:
         # Attempt to authenticate with cognito identity pool
-        response: InitiateAuthResponseTypeDef = cognito_client.initiate_auth(
+        response = cognito_client.initiate_auth(
             ClientId=user_pool_client_id,
             AuthFlow='USER_PASSWORD_AUTH',
             AuthParameters={'USERNAME': username, 'PASSWORD': password}

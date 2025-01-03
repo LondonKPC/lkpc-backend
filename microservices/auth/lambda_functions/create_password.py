@@ -4,7 +4,6 @@ from os import getenv
 from typing import Any, Union
 
 from boto3 import client
-from mypy_boto3_cognito_idp.client import CognitoIdentityProviderClient
 
 from utils.aws_lambda import construct_response
 
@@ -12,7 +11,7 @@ user_pool_client_id: str = getenv('USER_POOL_CLIENT_ID', '')
 if not user_pool_client_id:
     raise RuntimeError('Environment variable \'USER_POOL_CLIENT_ID\' is not set')
 
-cognito_client: CognitoIdentityProviderClient = client("cognito-idp")
+cognito_client = client("cognito-idp")
 
 def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Union[int, dict[str, Any]]]:
     """
