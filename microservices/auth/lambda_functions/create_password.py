@@ -1,12 +1,18 @@
 # create_password.py
+
+from os import getenv
 from typing import Any, Union
 
-from microservices.auth.lambda_functions.login import cognito_client
+from boto3 import client
+from mypy_boto3_cognito_idp.client import CognitoIdentityProviderClient
+
 from utils.aws_lambda import construct_response
 
-from boto3 import client
+user_pool_client_id: str = getenv('USER_POOL_CLIENT_ID', '')
+if not user_pool_client_id:
+    raise RuntimeError('Environment variable \'USER_POOL_CLIENT_ID\' is not set')
 
-cognito_client: CognitoIdentityProviderClient =
+cognito_client: CognitoIdentityProviderClient = client("cognito-idp")
 
 def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Union[int, dict[str, Any]]]:
     """
@@ -19,9 +25,32 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Union[int, 
     """
     try:
         username: str = event['username']
-        password: str = event['password']
+        new_password: str = event['newPassword']
         session: str = event['session']
-            except KeyError as e:
+    except KeyError as e:
         return construct_response(status_code=400, message=f'Missing parameters. Client error: {e}')
 
     try:
+        response: dict[str, Any] = cognito_client.respond_to_auth_challenge(
+            ClientId=user_pool_client_id,
+            ChallengeName='NEW_PASSWORD_REQUIRED',
+            ChallengeResponses={
+                'USERNAME': username,
+                'NEW_PASSWORD': new_password,
+            },
+            Session=session
+        )
+
+    except Exception as e:
+        return construct_response(status_code=500, message=str(e))
+
+    else:
+        data: dict[str, Any] = {
+            'accessToken': response['AuthenticationResult']['AccessToken'],
+            'expiresIn': response['AuthenticationResult']['ExpiresIn'],
+            'refreshToken': response['AuthenticationResult']['RefreshToken'],
+        }
+
+        print(f'{username} has confirmed their account successfully.')
+
+        return construct_response(status_code=200, data=data)

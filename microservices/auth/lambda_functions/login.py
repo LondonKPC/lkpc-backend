@@ -4,11 +4,11 @@
 from os import getenv
 from typing import Any, Union
 
-from utils.aws_lambda import construct_response
-
 from boto3 import client
 from mypy_boto3_cognito_idp.client import CognitoIdentityProviderClient
 from mypy_boto3_cognito_idp.type_defs import InitiateAuthResponseTypeDef
+
+from utils.aws_lambda import construct_response
 
 user_pool_client_id: str = getenv('USER_CLIENT_ID', '')
 if not user_pool_client_id:
